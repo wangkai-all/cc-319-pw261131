@@ -32,3 +32,7 @@ test-results/
 *.sqlite3-shm
 *.sqlite3-journal
 !*.traineddata.gz
+
+# 本地运行时状态：由演示数据或导入生成，不入库
+data/state.json
+data/state.json.*.tmp

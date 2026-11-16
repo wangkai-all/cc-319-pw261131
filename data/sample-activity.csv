@@ -1,0 +1,10 @@
+# 虚构的计量台账示例（报告期）。
+# 仅用于演示“数据接入”，数值与真实设施无关。
+# 额外两列用于人工核对，不参与计算。
+itemId,period,activity,label,unit
+item-power-process,report,33200,反应与精馏装置用电,MWh
+item-power-utility,report,9050,公用工程与照明用电,MWh
+item-steam,report,18100,外购蒸汽（干燥与伴热）,GJ
+item-gas,report,2280,天然气（备用锅炉与焚烧）,千立方米
+item-refrig,report,155,制冷剂补充与泄漏,kg
+item-line-b,report,5150,B 线溶剂回收（2025 年并入边界）,MWh

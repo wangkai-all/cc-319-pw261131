@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>减排归因与版本核算实验室 · 虚构演示</title>
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+<a class="skip-link" href="#main">跳到主要内容</a>
+
+<header class="app-header">
+  <div class="brand">
+    <div class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 40 40" role="presentation"><path d="M6 30h6v-9H6zm11 0h6V13h-6zm11 0h6V7h-6z" fill="currentColor"/><path d="M4 33h32" stroke="currentColor" stroke-width="2"/></svg>
+    </div>
+    <div>
+      <h1>减排归因与版本核算实验室</h1>
+      <p class="brand-sub">活动数据 · 项目申报 · 因子版本 · 组织边界 · 归属比较</p>
+    </div>
+  </div>
+  <div class="header-tools">
+    <span class="badge badge-fiction" title="所有站点、活动数据、因子与项目均为虚构">虚构演示数据</span>
+    <label class="actor-field">
+      <span>操作人</span>
+      <input id="actor" type="text" maxlength="40" value="分析员 A" autocomplete="off" />
+    </label>
+    <div class="menu" data-menu>
+      <button class="btn btn-quiet" id="data-menu-btn" aria-haspopup="true" aria-expanded="false">数据</button>
+      <div class="menu-panel" role="menu" hidden>
+        <button role="menuitem" id="export-btn">导出工作区 JSON</button>
+        <button role="menuitem" id="import-btn">从 JSON 恢复…</button>
+        <hr />
+        <button role="menuitem" class="danger" id="reset-btn">重置为演示初始状态</button>
+      </div>
+      <input type="file" id="import-file" accept="application/json,.json" hidden />
+    </div>
+  </div>
+</header>
+
+<div class="context-bar" id="context-bar" aria-live="polite"></div>
+
+<nav class="tabs" aria-label="主要视图">
+  <button class="tab is-active" data-tab="overview">概览</button>
+  <button class="tab" data-tab="attribution">归属比较</button>
+  <button class="tab" data-tab="data">数据与假设</button>
+  <button class="tab" data-tab="governance">版本治理</button>
+</nav>
+
+<main id="main">
+  <section class="view" id="view-overview" aria-labelledby="tab-overview">
+    <div class="notice notice-strong">
+      <div>
+        <h2>实际变化不等于两份项目申报之和</h2>
+        <p>
+          同一活动量的下降可能被“节能改造”和“工艺优化”同时申报。本页把
+          <strong>实际排放变化</strong>、<strong>基线估算</strong>与<strong>可归属项目</strong>分开呈现：
+          项目归属只解释“项目效应”部分，重叠的部分单列为交互作用，不硬分给任何一方。
+        </p>
+      </div>
+      <span class="notice-tag">方法演示</span>
+    </div>
+
+    <div class="kpi-grid" id="kpi-grid"></div>
+
+    <div class="panel-grid two">
+      <section class="panel">
+        <header class="panel-head">
+          <h2>实际变化从哪里来</h2>
+          <p class="panel-sub">由上到下：基准排放 → 因子更新 → 项目效应 → 其它活动变化 → 报告排放</p>
+        </header>
+        <div id="waterfall" class="chart-host"></div>
+        <details class="data-details">
+          <summary>查看数据表</summary>
+          <div id="waterfall-table"></div>
+        </details>
+      </section>
+
+      <section class="panel">
+        <header class="panel-head">
+          <h2>三个视角，三种问题</h2>
+          <p class="panel-sub">它们回答的不是同一个问题，因此不能互换或相加。</p>
+        </header>
+        <div class="lens-list" id="lens-list"></div>
+      </section>
+    </div>
+
+    <div class="panel-grid two">
+      <section class="panel">
+        <header class="panel-head">
+          <h2>项目申报与可归属量</h2>
+          <p class="panel-sub" id="overview-method-note"></p>
+        </header>
+        <div id="overview-allocations" class="chart-host"></div>
+        <div id="overview-naive" class="callout warn"></div>
+      </section>
+
+      <section class="panel">
+        <header class="panel-head">
+          <h2>口径与数据血缘</h2>
+          <p class="panel-sub">基准与对照必须同版；已确认报告只读。</p>
+        </header>
+        <div id="lineage-list" class="lineage-list"></div>
+        <div id="warnings" class="warning-list"></div>
+      </section>
+    </div>
+  </section>
+
+  <section class="view" id="view-attribution" aria-labelledby="tab-attribution" hidden>
+    <div class="toolbar">
+      <div class="method-switch" role="radiogroup" aria-label="归属方法" id="method-switch"></div>
+      <div class="toolbar-right">
+        <label class="select-field">
+          <span>对照任务</span>
+          <select id="compare-select"></select>
+        </label>
+        <button class="btn btn-quiet" id="refresh-attribution">刷新</button>
+      </div>
+    </div>
+    <div id="method-note" class="notice"></div>
+    <div id="comparison-banner"></div>
+
+    <section class="panel">
+      <header class="panel-head">
+        <h2>项目级归属</h2>
+        <p class="panel-sub">每行给出申报依据、可归属量与差额；最后一列为该结果在该方法下的形成方式。</p>
+      </header>
+      <div class="table-wrap">
+        <table class="data-table" id="alloc-table"></table>
+      </div>
+      <div id="totals-strip" class="totals-strip"></div>
+    </section>
+
+    <div class="panel-grid two">
+      <section class="panel">
+        <header class="panel-head">
+          <h2>交互作用：重叠申报在哪里</h2>
+          <p class="panel-sub">联合效应小于各自单独效应之和的部分，就是两个项目重复解释的同一段变化。</p>
+        </header>
+        <div id="combos"></div>
+      </section>
+
+      <section class="panel">
+        <header class="panel-head">
+          <h2>无法分离的部分</h2>
+          <p class="panel-sub">项目未解释的活动变化、因子更新，以及不归属任何项目的重叠部分。</p>
+        </header>
+        <div id="unattributed"></div>
+      </section>
+    </div>
+
+    <section class="panel">
+      <header class="panel-head">
+        <h2>顺序依赖</h2>
+        <p class="panel-sub">
+          同一组项目、同一组数据，仅改变申报顺位，优先扣除法给出的归属就不同。
+          下表穷举所有顺位（最多 4 个项目；超过则只说明方法本身仍依赖顺序）。
+        </p>
+      </header>
+      <div id="order-panel"></div>
+    </section>
+
+    <section class="panel">
+      <header class="panel-head">
+        <h2>因子更新与真实活动变化</h2>
+        <p class="panel-sub">同一条活动数据，因子版本更新带来的变化与真实活动量变化必须分开。</p>
+      </header>
+      <div id="decomposition"></div>
+    </section>
+  </section>
+
+  <section class="view" id="view-data" aria-labelledby="tab-data" hidden>
+    <div class="notice">
+      <div>
+        <h2>可修改的假设</h2>
+        <p>
+          基准期活动量与基准期因子受治理约束，不能在这里直接改；报告期活动量、报告期因子与项目申报幅度可以调整，
+          每项修改都会写入审计记录。基准期更正请使用「追溯更正」或「组织边界重述」流程。
+        </p>
+      </div>
+    </div>
+
+    <section class="panel">
+      <header class="panel-head">
+        <h2>数据接入</h2>
+        <p class="panel-sub">
+          从虚构计量台账接入报告期活动。只接受 <code>itemId,period,activity</code> 三列、<code>period=report</code> 的行；
+          基准期数据不能从文件覆盖，必须走组织边界重述或因子追溯更正。
+        </p>
+      </header>
+      <form class="inline-form" id="ingest-form" style="border-top:none;margin-top:0;padding-top:0">
+        <div class="form-grid">
+          <label>来源说明<input name="sourceLabel" type="text" required placeholder="例如：2025 年 12 月计量台账导出（虚构）" /></label>
+          <label>备注<input name="note" type="text" placeholder="可选：覆盖了哪些表计" /></label>
+          <label class="span-2">文件<input name="file" id="ingest-file" type="file" accept=".csv,text/csv" required /></label>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit">接入并应用</button>
+          <button class="btn btn-quiet" type="button" id="download-template">下载当前活动模板</button>
+          <span class="hint" id="ingest-hint">接入会直接写入草稿的报告期活动，并记录来源与行数。</span>
+        </div>
+      </form>
+      <div id="ingest-history" class="split-list" style="margin-top:.8rem"></div>
+    </section>
+
+    <div class="toolbar sticky-toolbar">
+      <div id="dirty-summary" class="dirty-summary">没有未应用的修改。</div>
+      <div class="toolbar-right">
+        <button class="btn btn-quiet" id="discard-edits">放弃修改</button>
+        <button class="btn btn-primary" id="apply-edits" disabled>应用修改</button>
+      </div>
+    </div>
+
+    <section class="panel">
+      <header class="panel-head">
+        <h2>活动数据</h2>
+        <p class="panel-sub">报告期活动可编辑；基准期只读。排放 = 活动量 × 因子。</p>
+      </header>
+      <div class="table-wrap">
+        <table class="data-table" id="activity-table"></table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <header class="panel-head">
+        <h2>核算因子</h2>
+        <p class="panel-sub">报告期因子可编辑；基准期因子只能通过“因子追溯更正”改变，并会改变基准指纹。</p>
+      </header>
+      <div class="table-wrap">
+        <table class="data-table" id="factor-table"></table>
+      </div>
+      <form class="inline-form" id="retro-form">
+        <h3>因子追溯更正</h3>
+        <div class="form-grid">
+          <label>因子<select name="factorId" id="retro-factor"></select></label>
+          <label>更正后基准因子<input name="baseKgPerUnit" type="number" min="0" step="0.01" required /></label>
+          <label>更正后报告期因子<input name="reportKgPerUnit" type="number" min="0" step="0.01" placeholder="留空则不变" /></label>
+          <label class="span-2">依据说明<input name="note" type="text" required placeholder="例如：虚构因子库发布更正通告，替换旧版缺省值" /></label>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-warn" type="submit">执行追溯更正</button>
+          <span class="hint">会改变基准指纹，使其它任务不再与当前任务同版。</span>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <header class="panel-head">
+        <h2>项目申报</h2>
+        <p class="panel-sub">申报幅度是项目组的假设，不是已核实的事实；它决定反事实的构造。</p>
+      </header>
+      <div class="table-wrap">
+        <table class="data-table" id="project-table"></table>
+      </div>
+      <div id="project-overlap" class="overlap-map"></div>
+    </section>
+
+    <div class="panel-grid two">
+      <section class="panel">
+        <header class="panel-head">
+          <h2>组织边界重述</h2>
+          <p class="panel-sub">边界变化会改变基准期，从而改变基准指纹。</p>
+        </header>
+        <div id="boundary-list"></div>
+        <form class="inline-form" id="boundary-form">
+          <div class="form-grid">
+            <label class="span-2">活动条目<select name="itemId" id="boundary-item"></select></label>
+            <label>调整类型
+              <select name="kind">
+                <option value="restated">重述基准量</option>
+                <option value="added">并入了新组织单元</option>
+                <option value="removed">剥离了组织单元</option>
+              </select>
+            </label>
+            <label>重述后基准活动<input name="newBaseActivity" type="number" min="0" step="0.01" required /></label>
+            <label class="span-2">原因<input name="note" type="text" required placeholder="例如：并入单元的计量台账存在重复计入" /></label>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-warn" type="submit">重述基准期</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <header class="panel-head">
+          <h2>当前假设</h2>
+          <p class="panel-sub">这些文字会随任务版本一起封存。</p>
+        </header>
+        <dl class="assumption-list" id="assumption-list"></dl>
+        <div class="callout">
+          <strong>数值口径</strong>
+          <p>排放以 kg CO₂e 计算与存储，页面以 t CO₂e 展示。所有因子与活动量均为虚构。</p>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <section class="view" id="view-governance" aria-labelledby="tab-governance" hidden>
+    <div class="notice">
+      <div>
+        <h2>版本、确认与追溯更正</h2>
+        <p>
+          每个任务是一个不可变快照：草稿可改，确认后封存并绑定内容哈希。旧报告只能撤回，不能改写；
+          追溯更正会另建草稿并保留旧哈希。跨任务对照要求基准指纹一致。
+        </p>
+      </div>
+      <span class="notice-tag">治理规则</span>
+    </div>
+
+    <section class="panel">
+      <header class="panel-head">
+        <h2>任务</h2>
+        <p class="panel-sub">基准版本与指纹决定“同版”关系；打开任务会切换全站上下文。</p>
+      </header>
+      <div id="batch-list" class="batch-list"></div>
+      <div class="form-actions">
+        <button class="btn btn-primary" id="new-batch">新建复核任务</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <header class="panel-head">
+        <h2>报告</h2>
+        <p class="panel-sub">报告内容只读；撤回与取代都保留原始哈希。</p>
+      </header>
+      <div id="report-list" class="report-list"></div>
+    </section>
+
+    <div class="panel-grid two">
+      <section class="panel">
+        <header class="panel-head">
+          <h2>基准对照</h2>
+          <p class="panel-sub">对照两个任务的基准期内容；不同版时列出逐项差异。</p>
+        </header>
+        <div class="form-grid compact">
+          <label>任务 A<select id="diff-a"></select></label>
+          <label>任务 B<select id="diff-b"></select></label>
+        </div>
+        <div id="diff-result" class="diff-result"></div>
+      </section>
+
+      <section class="panel">
+        <header class="panel-head">
+          <h2>确认与取代</h2>
+          <p class="panel-sub">确认后不能修改已确认报告；如数据有误，请发起追溯更正。</p>
+        </header>
+        <form class="inline-form" id="confirm-form">
+          <div class="form-grid compact">
+            <label class="span-2">报告名称<input name="reportLabel" id="confirm-label" type="text" required /></label>
+            <label class="span-2">归属方法<select name="method" id="confirm-method"></select></label>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" type="submit">确认并出具报告</button>
+            <span class="hint" id="confirm-hint"></span>
+          </div>
+        </form>
+        <form class="inline-form" id="supersede-form">
+          <h3>对已确认任务发起追溯更正</h3>
+          <div class="form-grid compact">
+            <label class="span-2">原因<input name="reason" type="text" required placeholder="例如：发现因子追溯更正，需重算基准" /></label>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-warn" type="submit">创建更正草稿</button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <section class="panel">
+      <header class="panel-head">
+        <h2>审计记录</h2>
+        <p class="panel-sub">所有写操作按修订号倒序排列。</p>
+      </header>
+      <ol id="audit-list" class="audit-list"></ol>
+    </section>
+  </section>
+</main>
+
+<div class="toast-stack" id="toasts" aria-live="polite" aria-atomic="false"></div>
+
+<dialog id="dialog" class="dialog">
+  <form method="dialog" class="dialog-inner">
+    <h2 id="dialog-title"></h2>
+    <div id="dialog-body"></div>
+    <menu>
+      <button value="cancel" class="btn btn-quiet">取消</button>
+      <button value="ok" class="btn btn-primary" id="dialog-ok">确定</button>
+    </menu>
+  </form>
+</dialog>
+
+<footer class="app-footer">
+  <p>
+    本工具使用完全虚构的站点、活动数据、因子与项目，仅用于演示归属方法与版本治理。
+    它<strong>不声称符合任何未指定的认证、核查、披露或报告标准</strong>，页面中的任何数字都不构成排放声明。
+  </p>
+</footer>
+
+<script src="/app.js" type="module"></script>
+</body>
+</html>
